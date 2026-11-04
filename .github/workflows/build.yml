@@ -21,6 +21,10 @@ jobs:
           path: minimal
           target: iOS
           sdk: given # uses the "geode" version in minimal/mod.json (5.11.2)
+          # Geode 5.11.2 normally downloads the bindings "main" branch, which has since moved
+          # on to the next Geode generation and no longer compiles with 5.11.2.
+          # This pins the bindings to the last commit before the 5.11.2 release (2026-10-15).
+          bindings-ref: 1605f500d053f8de122bf5c7dc6d17c24866e02e
 
       - name: Upload .geode file
         uses: actions/upload-artifact@v7
