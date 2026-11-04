@@ -1,4 +1,4 @@
-name: Build iOS Geode Mod
+name: Build TpllKit
 
 on:
   workflow_dispatch:
@@ -8,13 +8,14 @@ on:
 
 jobs:
   build:
-    name: Build iOS mod
+    name: Build iOS Mod
     runs-on: macos-latest
+
     steps:
-      - name: Check out repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build the mod
+      - name: Build TpllKit
         uses: geode-sdk/build-geode-mod@main
         with:
           path: minimal
