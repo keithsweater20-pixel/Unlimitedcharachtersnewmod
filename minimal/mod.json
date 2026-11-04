@@ -1,12 +1,38 @@
 {
-  "geode": "v5.11.2",
-  "gd": {
-    "ios": "2.208"
-  },
-  "id": "keithsweater20.tpllkit",
-  "name": "TpllKit",
-  "version": "1.0.0",
-  "developer": "keithsweater20",
-  "description": "Expands Geometry Dash trigger text input limits for advanced level systems.",
-  "dependencies": {}
+	"geode": "5.11.2",
+	"gd": {
+		"ios": "2.2081"
+	},
+	"id": "keithsweater20.tpllkit",
+	"name": "TpllKit",
+	"version": "v1.0.0",
+	"developer": "keithsweater20",
+	"description": "Raises the artificial character limits on text inputs (trigger/text-object popups) while you are in the level editor.",
+	"tags": ["editor", "utility"],
+	"settings": {
+		"enabled": {
+			"type": "bool",
+			"name": "Enabled",
+			"description": "Turn the raised text limit on or off.",
+			"default": true
+		},
+		"char-limit": {
+			"type": "int",
+			"name": "Character limit",
+			"description": "New maximum length for free-text inputs. Very large values can make the editor slow when rendering text.",
+			"default": 50000,
+			"min": 1,
+			"max": 1000000,
+			"control": {
+				"input": true,
+				"slider": false
+			}
+		},
+		"editor-only": {
+			"type": "bool",
+			"name": "Editor only",
+			"description": "Only raise limits while the level editor is open. Leaves account, comment and level-upload fields untouched.",
+			"default": true
+		}
+	}
 }

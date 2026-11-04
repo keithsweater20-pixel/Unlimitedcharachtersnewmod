@@ -1,4 +1,4 @@
-name: Build TpllKit
+name: Build TpllKit (iOS)
 
 on:
   workflow_dispatch:
@@ -7,17 +7,24 @@ on:
       - "**"
 
 jobs:
-  build:
-    name: Build iOS Mod
+  build-ios:
+    name: iOS
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - name: Build TpllKit
+      - name: Build the mod for iOS
+        id: build
         uses: geode-sdk/build-geode-mod@main
         with:
           path: minimal
           target: iOS
-          combine: true
+          sdk: given # uses the "geode" version in minimal/mod.json (5.11.2)
+
+      - name: Upload .geode file
+        uses: actions/upload-artifact@v7
+        with:
+          name: TpllKit-iOS
+          path: ${{ steps.build.outputs.build-output }}/*.geode
+          if-no-files-found: error
