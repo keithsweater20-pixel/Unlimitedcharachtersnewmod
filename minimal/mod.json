@@ -1,17 +1,12 @@
 {
-	"geode": "{{ geode }}",
-	"gd": {
-		"win": "2.2081",
-		"android": "2.2081",
-		"mac": "2.2081",
-		"ios": "2.2081"
-	},
-	"id": "{{ id }}",
-	"name": "{{ name }}",
-	"version": "{{ version }}",
-	"developer": "{{ developer }}",
-	"description": "{{ description }}",
-	"dependencies": {
-		"geode.node-ids": ">=v1.23.3"
-	}
+  "geode": "1.5.5",
+  "gd": {
+    "ios": "2.208"
+  },
+  "id": "unlimited-trigger-text",
+  "name": "Unlimited Trigger Text",
+  "version": "1.0.0",
+  "developer": "keithsweater20",
+  "description": "Raises Geometry Dash trigger text input limits.",
+  "dependencies": {}
 }
