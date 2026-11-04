@@ -3,10 +3,10 @@
   "gd": {
     "ios": "2.208"
   },
-  "id": "unlimited-trigger-text",
-  "name": "Unlimited Trigger Text",
+  "id": "keithsweater20.tpllkit",
+  "name": "TpllKit",
   "version": "1.0.0",
   "developer": "keithsweater20",
-  "description": "Raises Geometry Dash trigger text input limits.",
+  "description": "Expands Geometry Dash trigger text input limits for advanced level systems.",
   "dependencies": {}
 }
