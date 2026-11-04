@@ -10,6 +10,8 @@ jobs:
   build-ios:
     name: iOS
     runs-on: macos-latest
+    permissions:
+      contents: write # needed to publish the release below
 
     steps:
       - uses: actions/checkout@v7
@@ -35,3 +37,16 @@ jobs:
           name: TpllKit-iOS
           path: ${{ steps.build.outputs.build-output }}/*.geode
           if-no-files-found: error
+
+      - name: Publish as a downloadable release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          FILE=$(ls "${{ steps.build.outputs.build-output }}"/*.geode | head -n 1)
+          gh release delete tpllkit-latest --cleanup-tag --yes --repo "$GITHUB_REPOSITORY" || true
+          gh release create tpllkit-latest "$FILE" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "TpllKit (latest build)" \
+            --notes "Latest iOS build of TpllKit for Geode 5.11.2 / GD 2.2081. Download the .geode file below."
