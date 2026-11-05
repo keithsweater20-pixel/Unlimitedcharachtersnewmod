@@ -5,16 +5,25 @@
 	},
 	"id": "keithsweater20.tpllkit",
 	"name": "TpllKit",
-	"version": "v1.0.0",
+	"version": "v1.1.0",
 	"developer": "keithsweater20",
 	"description": "Raises the artificial character limits on text inputs (trigger/text-object popups) while you are in the level editor.",
-	"tags": ["editor", "utility"],
+	"tags": [
+		"editor",
+		"utility"
+	],
 	"settings": {
 		"enabled": {
 			"type": "bool",
 			"name": "Enabled",
 			"description": "Turn the raised text limit on or off.",
 			"default": true
+		},
+		"unlimited": {
+			"type": "bool",
+			"name": "Unlimited",
+			"description": "Remove the cap entirely (up to 2,147,483,647 characters, the most the game can store). Overrides 'Character limit'. Very long text can freeze the editor.",
+			"default": false
 		},
 		"char-limit": {
 			"type": "int",
