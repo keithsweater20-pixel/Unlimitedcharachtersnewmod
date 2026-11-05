@@ -63,6 +63,19 @@ namespace {
         }
     }
 
+    // Diagnostic: the first time each hook runs, show what it saw. This separates
+    // "the hook never runs" from "the hook runs but the box's limit is elsewhere".
+    void diagnose(char const* where, unsigned bit, int original, bool active, bool keep) {
+        static std::atomic<unsigned> seen{0};
+        unsigned mask = 1u << bit;
+        if (seen.fetch_or(mask) & mask) return;
+        log::info("TpllKit hook {} ran: box limit {}, active {}, kept {}", where, original, active, keep);
+        if (Mod::get()->getSettingValue<bool>("show-notice")) {
+            std::string text = fmt::format("TpllKit {}: box limit {}, on {}, kept {}", where, original, active, keep);
+            Notification::create(text.c_str(), NotificationIcon::Info, 2.f)->show();
+        }
+    }
+
     // Temporarily raises a text input's own limit for the duration of one call,
     // then puts the original value back. The game's stored limit is never changed
     // permanently, so nothing outside these calls can observe the difference.
@@ -71,10 +84,13 @@ namespace {
         int original;
         bool active = false;
 
-        LimitScope(CCTextInputNode* n, char const* where) : node(n), original(n->m_maxLabelLength) {
-            if (!limitsActive()) return;
+        LimitScope(CCTextInputNode* n, char const* where, unsigned bit) : node(n), original(n->m_maxLabelLength) {
+            bool on = limitsActive();
+            bool keep = mustKeepLimit(n);
+            diagnose(where, bit, original, on, keep);
+            if (!on) return;
             if (original <= 0) return; // 0 = no explicit limit, leave it alone
-            if (mustKeepLimit(n)) return;
+            if (keep) return;
             int target = configuredLimit();
             if (original >= target) return;
             node->m_maxLabelLength = target;
@@ -97,22 +113,22 @@ namespace {
 // text, an existing long value is not cut short and then saved back truncated.
 class $modify(TpllInputNode, CCTextInputNode) {
     bool onTextFieldInsertText(CCTextFieldTTF* sender, char const* text, int len, enumKeyCodes keyCode) {
-        LimitScope scope(this, "insert");
+        LimitScope scope(this, "insert", 0);
         return CCTextInputNode::onTextFieldInsertText(sender, text, len, keyCode);
     }
 
     void setString(gd::string text) {
-        LimitScope scope(this, "setString");
+        LimitScope scope(this, "setString", 1);
         CCTextInputNode::setString(text);
     }
 
     void updateLabel(gd::string text) {
-        LimitScope scope(this, "updateLabel");
+        LimitScope scope(this, "updateLabel", 2);
         CCTextInputNode::updateLabel(text);
     }
 
     void textChanged() {
-        LimitScope scope(this, "textChanged");
+        LimitScope scope(this, "textChanged", 3);
         CCTextInputNode::textChanged();
     }
 };
