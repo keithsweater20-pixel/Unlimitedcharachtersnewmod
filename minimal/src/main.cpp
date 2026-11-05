@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CCTextInputNode.hpp>
 #include <Geode/modify/SetTextPopup.hpp>
+#include <Geode/ui/Notification.hpp>
 
 #include <algorithm>
 #include <atomic>
@@ -34,9 +35,11 @@ namespace {
     //  - number fields (IDs, offsets...) so values can never overflow what they parse into
     //  - password fields
     bool mustKeepLimit(CCTextInputNode* node) {
+        if (node->m_usePasswordChar) return true;
+        // Opt-in: let number boxes be raised too (very large numbers may overflow).
+        if (Mod::get()->getSettingValue<bool>("number-fields")) return false;
         if (node->m_numberInput) return true;
         if (static_cast<int>(node->m_valueType) != 0) return true; // Float / Int / Uint
-        if (node->m_usePasswordChar) return true;
         std::string allowed = node->m_allowedChars;
         if (!allowed.empty() && allowed.find_first_not_of("0123456789.-+") == std::string::npos) {
             return true; // digits-only character filter
@@ -48,8 +51,15 @@ namespace {
     // without flooding it on every keystroke.
     void logRaise(char const* where, int from, int to) {
         static std::atomic<int> logged{0};
-        if (logged.fetch_add(1) < 12) {
+        int count = logged.fetch_add(1);
+        if (count < 12) {
             log::info("TpllKit: raised text limit {} -> {} in {}", from, to, where);
+        }
+        // One on-screen notice per game session, so you can see the hook fired
+        // without reading logs.
+        if (count == 0 && Mod::get()->getSettingValue<bool>("show-notice")) {
+            std::string text = fmt::format("TpllKit active: limit {} -> {}", from, to);
+            Notification::create(text.c_str(), NotificationIcon::Info, 2.f)->show();
         }
     }
 

@@ -5,7 +5,7 @@
 	},
 	"id": "keithsweater20.tpllkit",
 	"name": "TpllKit",
-	"version": "v1.1.0",
+	"version": "v1.2.0",
 	"developer": "keithsweater20",
 	"description": "Raises the artificial character limits on text inputs (trigger/text-object popups) while you are in the level editor.",
 	"tags": [
@@ -36,6 +36,18 @@
 				"input": true,
 				"slider": false
 			}
+		},
+		"number-fields": {
+			"type": "bool",
+			"name": "Include number boxes",
+			"description": "Also raise the limit on number-only boxes (IDs, values). Very large numbers can overflow and behave strangely. Password boxes are never changed.",
+			"default": false
+		},
+		"show-notice": {
+			"type": "bool",
+			"name": "Show proof notice",
+			"description": "Show a small notice the first time TpllKit raises a limit in a session.",
+			"default": true
 		},
 		"editor-only": {
 			"type": "bool",
