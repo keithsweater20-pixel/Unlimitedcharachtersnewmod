@@ -10,6 +10,7 @@
 #include <climits>
 #include <cmath>
 #include <cstdlib>
+#include <functional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -135,52 +136,76 @@ namespace {
         return ccp(std::floor(center.x / 30.f) * 30.f + 15.f, std::floor(center.y / 30.f) * 30.f + 15.f);
     }
 
-    std::string generateCarry(StackConfig const& c, LevelEditorLayer* lel) {
+    // Counter Mode: N counters laid out side by side. Counter 1 takes the clicks. When it reaches the
+    // cap it resets to 0 and the first counter that is not full yet gets +1. When every counter
+    // is full (each at the cap) the click source is switched off.
+    std::string generateCounters(StackConfig const& c, LevelEditorLayer* lel) {
         int n = c.stacks;
-        if (c.perClick < 1 || c.perClick >= c.clicks) return "Add Per Click must be at least 1 and smaller than the base.";
-        if (c.perClick > 100) return "Add Per Click is limited to 100 in Carry Mode.";
+        int64_t cap = c.omega ? kOmegaCap : std::min<int64_t>(c.clicks, kNormalCap);
+        if (c.perClick < 1 || c.perClick >= cap) return "Add Per Click must be at least 1 and smaller than the cap.";
+        if (c.perClick > 100) return "Add Per Click is limited to 100 in Counter Mode.";
         if (c.itemStart + n - 1 > kMaxID) return "Item IDs would go above 9999.";
-        if (c.groupStart + n + 1 > kMaxID) return "Group IDs would go above 9999.";
-        int CLICK = c.groupStart;
-        auto END = [&](int i) { return c.groupStart + 1 + i; };
-        int BLK = c.groupStart + 1 + n;
-        auto ITEM = [&](int i) { return c.itemStart + i; };
+        if (c.groupStart + 4 * n + 1 > kMaxID) return "Group IDs would go above 9999.";
+        int g = c.groupStart;
+        int CLICK = g, RG = g + 1, RR = g + 2, FIN = g + 3;
+        auto G     = [&](int s) { return g + 4 + (s - 2); };                // s = 2..n+1
+        auto CARRY = [&](int s) { return g + 4 + n + (s - 2); };            // s = 2..n
+        auto STG   = [&](int s) { return g + 3 + 2 * n + (s - 2); };        // s = 2..n
+        auto BLK   = [&](int i) { return g + 3 * n + 2 + (i - 1); };        // i = 1..n
+        auto ITEM  = [&](int i) { return c.itemStart + i - 1; };            // i = 1..n
+        auto BID   = [&](int i) { return c.blockStart + i - 1; };
 
         auto p = basePoint(lel);
         float bx = p.x, by = p.y;
         Builder b;
-        clickSource(b, c, bx, by, c.blockStart, CLICK, 0);
-        blockObject(b, c, bx, by - 30.f, c.blockStart, BLK);
-        b.text(bx + 60.f, by, "Click");
+
+        // ---- Part 1: click panel (click source, +1 pickups, carry-routing Count triggers) ----
+        clickSource(b, c, bx, by, BID(1), CLICK, 0);
+        b.text(bx, by + 30.f, "Click");
         for (int k = 0; k < static_cast<int>(c.perClick); ++k)
-            b.add(1817, bx + 30.f + 30.f * k, by + 0.f, pickup(ITEM(0), 1, false, CLICK));
-        for (int i = 0; i < n; ++i) {
-            float y = by + (i + 1) * 30.f;
-            if (i == n - 1) {
-                // top digit: when full, hold at base-1... and make the block disappear (counter full)
-                b.add(1611, bx, y, fmt::format(",80,{},77,{},51,{},56,1,104,1", ITEM(i), c.clicks, END(i)));
-                b.add(1817, bx + 30.f, y, pickup(ITEM(i), c.clicks - 1, true, END(i)));
-                b.add(1049, bx + 60.f, y, toggle(BLK, false, END(i)));
+            b.add(1817, bx + 30.f * k, by - 60.f, pickup(ITEM(1), 1, false, CLICK));
+        b.add(1611, bx, by + 90.f, fmt::format(",80,{},77,{},51,{},56,1,104,1,57,{}", ITEM(1), cap, RG, RR));
+        for (int s = 2; s <= n + 1; ++s) {
+            int target = (s <= n) ? CARRY(s) : FIN;
+            b.add(1611, bx + 30.f * (s - 1), by + 90.f,
+                fmt::format(",80,{},77,{},51,{},56,1,104,1,57,{}", ITEM(1), cap, target, G(s)));
+        }
+        // start-of-level setup: only the first carry route is active
+        for (int s = 3; s <= n + 1; ++s)
+            b.add(1049, bx + 30.f * (s - 3), by + 120.f, fmt::format(",51,{},56,0", G(s)));
+        if (n == 1) b.add(1049, bx, by + 150.f, fmt::format(",51,{},56,0", RR));
+
+        // ---- Part 2: one column per counter, 150 units apart ----
+        for (int i = 1; i <= n; ++i) {
+            float cx = bx + 150.f + (i - 1) * 150.f;
+            b.display(cx, by, ITEM(i));
+            b.text(cx, by + 30.f, fmt::format("Counter {}", i));
+            blockObject(b, c, cx, by - 30.f, BID(i), BLK(i));
+            if (i == 1) {
+                b.add(1817, cx + 30.f, by, pickup(ITEM(1), 0, true, RG));       // reset to 0
+                b.add(1049, cx + 60.f, by, toggle(CLICK, false, FIN));          // everything full: stop clicks
+                b.add(1049, cx + 90.f, by, toggle(BLK(1), false, FIN));         // counter 1 block disappears
             } else {
-                b.add(1611, bx, y, fmt::format(",80,{},77,{},51,{},56,1,104,1", ITEM(i), c.clicks, END(i)));
-                b.add(1817, bx + 30.f, y, pickup(ITEM(i), 0, true, END(i)));
-                b.add(1817, bx + 60.f, y, pickup(ITEM(i + 1), 1, false, END(i)));
+                b.add(1817, cx + 30.f, by, pickup(ITEM(i), 1, false, CARRY(i))); // +1 from counter 1
+                b.add(1611, cx + 60.f, by, fmt::format(",80,{},77,{},51,{},56,1,104,1", ITEM(i), cap, STG(i)));
+                b.add(1049, cx + 60.f, by + 30.f, toggle(G(i), false, STG(i)));      // stop routing to this counter
+                b.add(1049, cx + 90.f, by + 30.f, toggle(G(i + 1), true, STG(i)));   // route to the next one
+                b.add(1049, cx + 60.f, by + 60.f, toggle(BLK(i), false, STG(i)));    // its block disappears
+                if (i == n) b.add(1049, cx + 90.f, by + 60.f, toggle(RR, false, STG(i))); // no more resets
             }
-            b.display(bx + 100.f, y, ITEM(i));
-            b.text(bx + 150.f, y, fmt::format("Stack {}", i + 1));
         }
         lel->createObjectsFromString(b.out, false, false);
         saveConfig(c);
-        return fmt::format("Carry counter: {} digits, base {}, items {}-{}, groups {}-{}.",
-            n, c.clicks, ITEM(0), ITEM(n - 1), c.groupStart, BLK);
+        return fmt::format("{} counters, cap {}, items {}-{}, groups {}-{}.",
+            n, cap, ITEM(1), ITEM(n), g, g + 4 * n + 1);
     }
 
     std::string generate(StackConfig const& c) {
         auto lel = LevelEditorLayer::get();
         if (!lel) return "Open the level editor first.";
         int n = c.stacks;
-        if (c.blockStart + (c.carry ? 0 : n - 1) > kMaxID) return "Block IDs would go above 9999.";
-        if (c.carry) return generateCarry(c, lel);
+        if (c.blockStart + n - 1 > kMaxID) return "Block IDs would go above 9999.";
+        if (c.carry) return generateCounters(c, lel);
         if (c.itemStart + n - 1 > kMaxID) return "Item IDs would go above 9999.";
         if (c.groupStart + n * 4 - 1 > kMaxID) return "Group IDs would go above 9999.";
 
@@ -237,6 +262,9 @@ protected:
     TextInput* m_groupIn = nullptr;
     TextInput* m_perIn = nullptr;
     TextInput* m_blockIn = nullptr;
+    TextInput* m_countersIn = nullptr;
+    CCLabelBMFont* m_stacksLbl = nullptr;
+    CCLabelBMFont* m_countersLbl = nullptr;
     CCMenuItemToggler* m_omega = nullptr;
     CCMenuItemToggler* m_carry = nullptr;
     CCMenuItemToggler* m_collision = nullptr;
@@ -252,12 +280,14 @@ protected:
         m_cfg = loadConfig();
         auto size = m_mainLayer->getContentSize();
 
+        CCLabelBMFont* lastLabel = nullptr;
         auto addField = [&](char const* label, TextInput*& field, std::string value, float labelX, float fieldX, float y) {
             auto l = CCLabelBMFont::create(label, "bigFont.fnt");
             l->setScale(.33f);
             l->setAnchorPoint({0.f, .5f});
             l->setPosition({labelX, y});
             m_mainLayer->addChild(l);
+            lastLabel = l;
             field = TextInput::create(85.f, "0", "bigFont.fnt");
             field->setFilter("0123456789");
             field->setMaxCharCount(10);
@@ -267,6 +297,9 @@ protected:
         };
         float y0 = size.height - 60.f, step = 38.f;
         addField("Stack Count", m_stacksIn, std::to_string(m_cfg.stacks), 15.f, 160.f, y0);
+        m_stacksLbl = lastLabel;
+        addField("Counters", m_countersIn, std::to_string(m_cfg.stacks), 15.f, 160.f, y0);
+        m_countersLbl = lastLabel;
         addField("Click Requirement", m_clicksIn, std::to_string(m_cfg.clicks), 15.f, 160.f, y0 - step);
         addField("Start Item ID", m_itemIn, std::to_string(m_cfg.itemStart), 15.f, 160.f, y0 - 2 * step);
         addField("Start Group ID", m_groupIn, std::to_string(m_cfg.groupStart), 215.f, 345.f, y0);
@@ -274,7 +307,7 @@ protected:
         addField("Start Block ID", m_blockIn, std::to_string(m_cfg.blockStart), 215.f, 345.f, y0 - 2 * step);
 
         float ty = y0 - 3 * step - 4.f;
-        auto addToggle = [&](char const* label, CCMenuItemToggler*& tog, bool value, float y) {
+        auto addToggle = [&](char const* label, CCMenuItemToggler*& tog, bool value, float y, std::function<void(bool)> cb = nullptr) {
             auto l = CCLabelBMFont::create(label, "bigFont.fnt");
             l->setScale(.36f);
             l->setAnchorPoint({0.f, .5f});
@@ -283,7 +316,7 @@ protected:
             tog = CCMenuItemExt::createToggler(
                 CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png"),
                 CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png"),
-                [](CCMenuItemToggler*) {}
+                [cb](CCMenuItemToggler* t) { if (cb) cb(!t->isToggled()); }
             );
             tog->toggle(value);
             tog->setScale(.6f);
@@ -291,9 +324,10 @@ protected:
             m_buttonMenu->addChild(tog);
         };
         addToggle("Omega Mode (to 2147483647)", m_omega, m_cfg.omega, ty);
-        addToggle("Carry Mode (digits)", m_carry, m_cfg.carry, ty - 28.f);
+        addToggle("Counter Mode", m_carry, m_cfg.carry, ty - 28.f, [this](bool on) { this->showCounterMode(on); });
         addToggle("Collision Mode (collision blocks)", m_collision, m_cfg.collision, ty - 56.f);
 
+        this->showCounterMode(m_cfg.carry);
         auto btn = CCMenuItemExt::createSpriteExtra(
             ButtonSprite::create("Create"),
             [this](CCMenuItemSpriteExtra*) { this->onCreate(); }
@@ -303,6 +337,16 @@ protected:
         return true;
     }
 
+    // Counter Mode swaps "Stack Count" for the new "Counters" setting.
+    void showCounterMode(bool on) {
+        m_stacksLbl->setVisible(!on);
+        m_stacksIn->setVisible(!on);
+        m_stacksIn->setEnabled(!on);
+        m_countersLbl->setVisible(on);
+        m_countersIn->setVisible(on);
+        m_countersIn->setEnabled(on);
+    }
+
     void onCreate() {
         StackConfig c;
         bool omega = m_omega->isToggled();
@@ -310,7 +354,7 @@ protected:
         c.carry = m_carry->isToggled();
         c.collision = m_collision->isToggled();
         c.perClick = std::max<int64_t>(1, parse(m_perIn, 1));
-        c.stacks = static_cast<int>(std::clamp<int64_t>(parse(m_stacksIn, 3), 1, kMaxStacks));
+        c.stacks = static_cast<int>(std::clamp<int64_t>(c.carry ? parse(m_countersIn, 3) : parse(m_stacksIn, 3), 1, kMaxStacks));
         c.clicks = std::clamp<int64_t>(parse(m_clicksIn, kNormalCap), 1, omega ? kOmegaCap : kNormalCap);
         c.itemStart = static_cast<int>(std::clamp<int64_t>(parse(m_itemIn, 1), 1, kMaxID));
         c.groupStart = static_cast<int>(std::clamp<int64_t>(parse(m_groupIn, 1), 1, kMaxID));
