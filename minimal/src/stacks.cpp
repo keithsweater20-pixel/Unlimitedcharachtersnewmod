@@ -295,7 +295,7 @@ class $modify(TpllEditorUI, EditorUI) {
         auto btn = CCMenuItemExt::createSpriteExtra(spr, [](CCMenuItemSpriteExtra*) {
             if (auto p = StackPopup::create()) p->show();
         });
-        btn->setPosition({55.f, win.height - 75.f});
+        btn->setPosition({win.width * 0.70f, win.height * 0.68f}); // left of the Copy button
         menu->addChild(btn);
         this->addChild(menu, 100);
         return true;
