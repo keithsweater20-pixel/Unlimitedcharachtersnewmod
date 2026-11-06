@@ -90,8 +90,8 @@ namespace {
 
     std::string generateCarry(StackConfig const& c, LevelEditorLayer* lel) {
         int n = c.stacks;
-        if (c.perClick < 1 || c.perClick >= c.clicks || c.clicks % c.perClick != 0)
-            return "Add Per Click must divide the base evenly (e.g. base 60, add 1).";
+        if (c.perClick < 1 || c.perClick >= c.clicks) return "Add Per Click must be at least 1 and smaller than the base.";
+        if (c.perClick > 100) return "Add Per Click is limited to 100 in Carry Mode.";
         if (c.itemStart + n - 1 > kMaxID) return "Item IDs would go above 9999.";
         if (c.groupStart + n - 1 > kMaxID) return "Group IDs would go above 9999.";
         auto CLICK = c.groupStart;                       // group run on every click
@@ -106,7 +106,10 @@ namespace {
         Builder b;
         // Click catcher: every click spawns the +perClick pickup on digit 0.
         b.add(1595, bx, by, fmt::format(",51,{}", CLICK));
-        b.add(1817, bx + 30.f, by, pickup(ITEM(0), c.perClick, false, CLICK));
+        // perClick separate +1 pickups (instead of one +N) so the Count trigger sees every
+        // value and no divisibility maths is needed.
+        for (int k = 0; k < static_cast<int>(c.perClick); ++k)
+            b.add(1817, bx + 30.f + 30.f * k, by, pickup(ITEM(0), 1, false, CLICK));
         for (int i = 0; i < n; ++i) {
             float y = by + (i + 1) * 30.f;
             if (i == n - 1) {
