@@ -5,9 +5,9 @@
 	},
 	"id": "keithsweater20.tpllkit",
 	"name": "TpllKit",
-	"version": "v1.7.0",
+	"version": "v1.8.0",
 	"developer": "keithsweater20",
-	"description": "Raises the artificial character limits on text inputs (trigger/text-object popups) while you are in the level editor.",
+	"description": "Raises the artificial character limits on text inputs while you are in the level editor, and generates Pickup-trigger stack/counter systems (with an experimental extended-integer mode).",
 	"tags": [
 		"editor",
 		"utility"
