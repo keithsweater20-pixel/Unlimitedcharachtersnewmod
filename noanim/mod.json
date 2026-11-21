@@ -1,0 +1,71 @@
+{
+	"geode": "5.11.2",
+	"gd": {
+		"win": "2.2081"
+	},
+	"id": "keithsweater20.noanimations",
+	"name": "No Icon Animations",
+	"version": "v1.0.0",
+	"developer": "keithsweater20",
+	"description": "Turn off the icon animation for each game mode you choose: cube, ship, ball, UFO, wave, robot, spider and swing copter. For example, with Cube selected the cube no longer rotates when it jumps. Visual only - gameplay and hitboxes are not changed.",
+	"tags": [
+		"utility",
+		"customization"
+	],
+	"settings": {
+		"enabled": {
+			"type": "bool",
+			"name": "Enabled",
+			"description": "Master switch. Turn it off to get every animation back.",
+			"default": true
+		},
+		"cube": {
+			"type": "bool",
+			"name": "Cube",
+			"description": "No jump rotation for the cube.",
+			"default": true
+		},
+		"ship": {
+			"type": "bool",
+			"name": "Ship",
+			"description": "No tilting for the ship.",
+			"default": false
+		},
+		"ball": {
+			"type": "bool",
+			"name": "Ball",
+			"description": "No rolling for the ball.",
+			"default": false
+		},
+		"ufo": {
+			"type": "bool",
+			"name": "UFO",
+			"description": "No tilting or wobble for the UFO.",
+			"default": false
+		},
+		"wave": {
+			"type": "bool",
+			"name": "Wave",
+			"description": "No rotation for the wave icon when it goes up and down.",
+			"default": false
+		},
+		"robot": {
+			"type": "bool",
+			"name": "Robot",
+			"description": "No running or jumping animation for the robot.",
+			"default": false
+		},
+		"spider": {
+			"type": "bool",
+			"name": "Spider",
+			"description": "No running or jumping animation for the spider.",
+			"default": false
+		},
+		"swing": {
+			"type": "bool",
+			"name": "Swing copter",
+			"description": "No tilting for the swing copter.",
+			"default": false
+		}
+	}
+}

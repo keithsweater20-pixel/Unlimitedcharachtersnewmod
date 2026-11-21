@@ -1,0 +1,45 @@
+name: Build No Icon Animations (Windows)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "noanim/**"
+      - ".github/workflows/build-noanim.yml"
+
+jobs:
+  build-windows:
+    name: Windows
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build
+        id: build
+        uses: geode-sdk/build-geode-mod@main
+        with:
+          path: noanim
+          target: Win64
+          sdk: given # the "geode" version in noanim/mod.json (5.11.2)
+          bindings-ref: 1605f500d053f8de122bf5c7dc6d17c24866e02e
+          configure-args: -DSKIP_BUILDING_CODEGEN=OFF
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: NoAnimations-Windows
+          path: ${{ steps.build.outputs.build-output }}/*.geode
+          if-no-files-found: error
+
+      - name: Publish release
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          FILE=$(ls "${{ steps.build.outputs.build-output }}"/*.geode | head -n 1)
+          gh release delete noanim-latest --cleanup-tag --yes --repo "$GITHUB_REPOSITORY" || true
+          gh release create noanim-latest "$FILE" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "No Icon Animations (Windows)" \
+            --notes "Windows build for Geode 5.11.2 / GD 2.2081."
