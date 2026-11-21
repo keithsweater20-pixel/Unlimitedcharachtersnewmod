@@ -1,0 +1,123 @@
+{
+	"geode": "4.6.0",
+	"gd": {
+		"win": "2.2081"
+	},
+	"id": "keithsweater20.fakecounter",
+	"name": "Fake FPS & CPS Counter",
+	"version": "v1.0.0",
+	"developer": "keithsweater20",
+	"description": "Shows FPS and CPS counters on screen in every scene. The numbers are fake and come only from the mod settings - they never change the real game FPS or real clicks.",
+	"tags": [
+		"utility",
+		"interface"
+	],
+	"settings": {
+		"show-counters": {
+			"type": "bool",
+			"name": "Show counters",
+			"description": "Master switch for both counters.",
+			"default": true
+		},
+		"show-fps": {
+			"type": "bool",
+			"name": "Show FPS",
+			"default": true
+		},
+		"show-cps": {
+			"type": "bool",
+			"name": "Show CPS",
+			"default": true
+		},
+		"fake-fps": {
+			"type": "string",
+			"name": "Fake FPS",
+			"description": "What the FPS counter shows. A number (0-100000) or any text/letters you want.",
+			"default": "240"
+		},
+		"fps-wobble": {
+			"type": "int",
+			"name": "FPS wobble (+/-)",
+			"description": "The FPS number moves randomly up or down by up to this much so it looks real. Only applies to numbers.",
+			"default": 5,
+			"min": 0,
+			"max": 100000
+		},
+		"fake-cps": {
+			"type": "string",
+			"name": "Fake CPS",
+			"description": "What the CPS counter shows. A number (0-1000) or any text/letters you want.",
+			"default": "12"
+		},
+		"cps-wobble": {
+			"type": "int",
+			"name": "CPS wobble (+/-)",
+			"description": "The CPS number moves randomly up or down by up to this much so it looks real. Only applies to numbers.",
+			"default": 2,
+			"min": 0,
+			"max": 1000
+		},
+		"fps-image": {
+			"type": "file",
+			"name": "FPS image",
+			"description": "Optional picture (png/jpg) shown next to the FPS number. Leave empty to show the text 'FPS' instead.",
+			"default": "",
+			"control": {
+				"dialog": "open",
+				"filters": [
+					{
+						"description": "Images",
+						"files": ["*.png", "*.jpg", "*.jpeg"]
+					}
+				]
+			}
+		},
+		"cps-image": {
+			"type": "file",
+			"name": "CPS image",
+			"description": "Optional picture (png/jpg) shown next to the CPS number. Leave empty to show the text 'CPS' instead.",
+			"default": "",
+			"control": {
+				"dialog": "open",
+				"filters": [
+					{
+						"description": "Images",
+						"files": ["*.png", "*.jpg", "*.jpeg"]
+					}
+				]
+			}
+		},
+		"pos-x": {
+			"type": "float",
+			"name": "X position %",
+			"description": "Horizontal position of the counters, as a percent of the screen width (0 = left).",
+			"default": 2.0,
+			"min": 0.0,
+			"max": 100.0
+		},
+		"pos-y": {
+			"type": "float",
+			"name": "Y position %",
+			"description": "Vertical position of the counters, as a percent of the screen height (100 = top).",
+			"default": 94.0,
+			"min": 0.0,
+			"max": 100.0
+		},
+		"scale": {
+			"type": "float",
+			"name": "Size",
+			"description": "Size multiplier for the counters.",
+			"default": 1.0,
+			"min": 0.1,
+			"max": 5.0
+		},
+		"opacity": {
+			"type": "int",
+			"name": "Opacity",
+			"description": "0 = invisible, 100 = solid.",
+			"default": 100,
+			"min": 0,
+			"max": 100
+		}
+	}
+}
