@@ -56,7 +56,8 @@ jobs:
 
       - name: Retarget mod.json to Geode 5.11.2
         shell: bash
-        run: sed -i 's/"geode": "4.6.0"/"geode": "5.11.2"/' fakecounter/mod.json
+        run: |
+          sed -i 's/"geode": "4.6.0"/"geode": "5.11.2"/' fakecounter/mod.json
 
       - name: Build
         id: build
