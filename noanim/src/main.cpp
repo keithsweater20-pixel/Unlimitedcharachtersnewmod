@@ -40,12 +40,7 @@ class $modify(NoAnimPlayer, PlayerObject) {
         PlayerObject::setRotation(rotation);
     }
 
-    // The cube / ball spin actions are not started at all for a disabled mode.
-    void runRotateAction(bool ground, int type) {
-        if (disabledFor(this)) return;
-        PlayerObject::runRotateAction(ground, type);
-    }
-
+    // The ball roll actions are not started at all for a disabled mode.
     void runBallRotation(float speed) {
         if (disabledFor(this)) return;
         PlayerObject::runBallRotation(speed);
@@ -85,11 +80,6 @@ class $modify(NoAnimSprite, CCAnimatedSprite) {
     void runAnimation(gd::string animation) {
         if (blocked()) return;
         CCAnimatedSprite::runAnimation(animation);
-    }
-
-    void runAnimationForced(gd::string animation) {
-        if (blocked()) return;
-        CCAnimatedSprite::runAnimationForced(animation);
     }
 
     void tweenToAnimation(gd::string animation, float duration) {
