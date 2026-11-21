@@ -4,7 +4,6 @@
 // timing or input, so the real FPS and real clicks are never touched.
 #include <Geode/Geode.hpp>
 #include <Geode/modify/MenuLayer.hpp>
-#include <Geode/ui/SceneManager.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -62,7 +61,6 @@ protected:
             l->setAnchorPoint({0.f, 0.5f});
             this->addChild(l);
         }
-        this->scheduleUpdate();
         return true;
     }
 
@@ -100,7 +98,9 @@ protected:
         row.icon = spr;
     }
 
-    void update(float dt) override {
+public:
+    // Called every frame by the driver below. Reads the settings each time, so changes apply instantly.
+    void tick(float dt) {
         auto mod = Mod::get();
         bool master = mod->getSettingValue<bool>("show-counters");
         bool showFps = master && mod->getSettingValue<bool>("show-fps");
@@ -168,7 +168,6 @@ protected:
         }
     }
 
-public:
     static FakeCounterNode* create() {
         auto ret = new FakeCounterNode();
         if (ret->init()) {
@@ -180,16 +179,36 @@ public:
     }
 };
 
-// The counters are created once (when the main menu first appears) and then kept on top
-// of every scene by Geode's SceneManager.
+// Keeps the counters on top of whatever scene is running: every frame it moves the node into the
+// current scene if it is not already there, so the counters show in every scene (menus, levels,
+// the editor, transitions).
+class FakeCounterDriver : public CCObject {
+public:
+    Ref<FakeCounterNode> node;
+
+    void update(float dt) override {
+        auto scene = CCDirector::get()->getRunningScene();
+        if (!scene || !node) return;
+        if (node->getParent() != scene) {
+            node->removeFromParentAndCleanup(false);
+            scene->addChild(node, 100000);
+        }
+        node->tick(dt);
+    }
+};
+
+// Started once, when the main menu first appears (the game's textures are ready by then).
 class $modify(FakeCounterMenu, MenuLayer) {
     bool init() {
         if (!MenuLayer::init()) return false;
-        static bool created = false;
-        if (!created) {
+        static bool started = false;
+        if (!started) {
             if (auto node = FakeCounterNode::create()) {
-                created = true;
-                SceneManager::get()->keepAcrossScenes(node);
+                started = true;
+                auto driver = new FakeCounterDriver();
+                driver->node = node;
+                CCDirector::get()->getScheduler()->scheduleUpdateForTarget(driver, 0, false);
+                // intentionally never released: the driver lives as long as the game
             }
         }
         return true;
